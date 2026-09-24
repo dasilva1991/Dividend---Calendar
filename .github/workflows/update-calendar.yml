@@ -59,6 +59,9 @@ jobs:
 
               data = r.json()
 
+              print("==========", ticker, "==========")
+              print(data)
+
               for d in data.get("data", []):
                   ex = d.get("ex_dividend_date")
 
