@@ -1,0 +1,33 @@
+name: Update Dividend Calendar
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create calendar
+        run: |
+          cat > dividends.ics <<'EOF'
+          BEGIN:VCALENDAR
+          VERSION:2.0
+          PRODID:-//Dividend Calendar//EN
+          CALSCALE:GREGORIAN
+          METHOD:PUBLISH
+          X-WR-CALNAME:My Dividend Calendar
+          X-WR-TIMEZONE:Europe/London
+          END:VCALENDAR
+          EOF
+
+      - name: Commit calendar
+        run: |
+          git config user.name "Dividend Calendar"
+          git config user.email "actions@github.com"
+          git add dividends.ics
+          git diff --cached --quiet || git commit -m "Update dividend calendar"
+          git push
