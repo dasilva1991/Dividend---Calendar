@@ -27,6 +27,7 @@ jobs:
         run: |
           python - <<'PY'
           import os
+          import time
           import requests
           from datetime import date
 
@@ -47,6 +48,9 @@ jobs:
           events = []
 
           for ticker, company in stocks.items():
+
+              print(f"Checking {ticker} - {company}")
+
               r = requests.get(
                   "https://www.alphavantage.co/query",
                   params={
@@ -59,10 +63,23 @@ jobs:
 
               data = r.json()
 
-              print("==========", ticker, "==========")
-              print(data)
+              if "Information" in data:
+                  print(f"Alpha Vantage message for {ticker}:")
+                  print(data["Information"])
 
-              for d in data.get("data", []):
+              if "Note" in data:
+                  print(f"Alpha Vantage note for {ticker}:")
+                  print(data["Note"])
+
+              if "Error Message" in data:
+                  print(f"Alpha Vantage error for {ticker}:")
+                  print(data["Error Message"])
+
+              dividend_data = data.get("data", [])
+
+              print(f"{ticker}: {len(dividend_data)} dividend records returned")
+
+              for d in dividend_data:
                   ex = d.get("ex_dividend_date")
 
                   if not ex or ex < str(date.today()):
@@ -75,7 +92,15 @@ jobs:
                       (ex, ticker, company, payment, amount)
                   )
 
+              time.sleep(2)
+
           events.sort()
+
+          if not events:
+              raise SystemExit(
+                  "No future dividend events were found. "
+                  "Check the Alpha Vantage response above."
+              )
 
           lines = [
               "BEGIN:VCALENDAR",
@@ -88,6 +113,7 @@ jobs:
           ]
 
           for ex, ticker, company, payment, amount in events:
+
               d = ex.replace("-", "")
 
               lines += [
@@ -109,7 +135,9 @@ jobs:
           with open("dividends.ics", "w") as f:
               f.write("\n".join(lines) + "\n")
 
+          print("================================")
           print("EVENTS CREATED:", len(events))
+          print("================================")
           PY
 
       - name: Commit calendar
