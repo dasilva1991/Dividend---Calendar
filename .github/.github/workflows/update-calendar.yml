@@ -1,0 +1,147 @@
+name: Update Dividend Calendar
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Create dividend calendar
+        env:
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+        run: |
+          python <<'PY'
+          import os
+          import requests
+          from datetime import datetime, timezone
+
+          stocks = {
+              "AG": "First Majestic Silver",
+              "NEM": "Newmont",
+              "MSFT": "Microsoft",
+              "FCX": "Freeport-McMoRan",
+              "ORCL": "Oracle",
+              "NKE": "Nike",
+              "CVX": "Chevron",
+              "SONY": "Sony Group",
+              "MA": "Mastercard",
+              "C": "Citigroup",
+              "AXP": "American Express"
+          }
+
+          api_key = os.environ["ALPHA_VANTAGE_API_KEY"]
+
+          def escape(text):
+              return str(text).replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+          events = []
+
+          for ticker, company in stocks.items():
+              response = requests.get(
+                  "https://www.alphavantage.co/query",
+                  params={
+                      "function": "DIVIDENDS",
+                      "symbol": ticker,
+                      "apikey": api_key
+                  },
+                  timeout=30
+              )
+
+              response.raise_for_status()
+              data = response.json()
+
+              for dividend in data.get("data", []):
+                  ex_date = dividend.get("ex_dividend_date")
+                  payment_date = dividend.get("payment_date")
+                  amount = dividend.get("amount")
+
+                  if not ex_date:
+                      continue
+
+                  try:
+                      ex_dt = datetime.strptime(ex_date, "%Y-%m-%d").date()
+                  except ValueError:
+                      continue
+
+                  if ex_dt < datetime.now(timezone.utc).date():
+                      continue
+
+                  description = f"{company} ({ticker})"
+
+                  if amount:
+                      description += f" - Dividend: ${amount}"
+
+                  if payment_date:
+                      description += f" - Payment date: {payment_date}"
+
+                  events.append({
+                      "ticker": ticker,
+                      "company": company,
+                      "ex_date": ex_date,
+                      "description": description
+                  })
+
+          events.sort(key=lambda x: x["ex_date"])
+
+          lines = [
+              "BEGIN:VCALENDAR",
+              "VERSION:2.0",
+              "PRODID:-//Hamid//Dividend Calendar//EN",
+              "CALSCALE:GREGORIAN",
+              "METHOD:PUBLISH",
+              "X-WR-CALNAME:Hamid - Dividend Calendar",
+              "X-WR-TIMEZONE:Europe/London"
+          ]
+
+          for event in events:
+              date = event["ex_date"].replace("-", "")
+              uid = f'{event["ticker"]}-{date}@hamid-dividend-calendar'
+
+              lines.extend([
+                  "BEGIN:VEVENT",
+                  f"UID:{uid}",
+                  f"DTSTART;VALUE=DATE:{date}",
+                  f"DTEND;VALUE=DATE:{date}",
+                  f"SUMMARY:Ex-Dividend: {escape(event['company'])} ({event['ticker']})",
+                  f"DESCRIPTION:{escape(event['description'])}",
+                  "BEGIN:VALARM",
+                  "TRIGGER:-P1D",
+                  "ACTION:DISPLAY",
+                  f"DESCRIPTION:Ex-dividend tomorrow: {escape(event['company'])}",
+                  "END:VALARM",
+                  "END:VEVENT"
+              ])
+
+          lines.append("END:VCALENDAR")
+
+          with open("dividends.ics", "w", encoding="utf-8") as file:
+              file.write("\n".join(lines) + "\n")
+
+          print(f"Created calendar with {len(events)} upcoming events.")
+          PY
+
+      - name: Commit updated calendar
+        run: |
+          git config user.name "Dividend Calendar"
+          git config user.email "actions@github.com"
+          git add dividends.ics
+          git diff --cached --quiet || git commit -m "Update dividend calendar"
+          git push
