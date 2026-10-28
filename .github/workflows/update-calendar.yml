@@ -211,12 +211,16 @@ jobs:
 
       - name: Commit and push calendar
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Dividend Calendar"
+          git config user.email "41898282+users.noreply.github.com"
           git add dividends.ics
+
           if git diff --cached --quiet; then
             echo "No calendar changes to commit."
           else
             git commit -m "Update dividend calendar"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
+
