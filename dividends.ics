@@ -3,39 +3,31 @@ VERSION:2.0
 PRODID:-//Dividend Calendar//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:My Dividend Calendar
-X-WR-TIMEZONE:Europe/London
 BEGIN:VEVENT
-UID:C-20261102@dividend-calendar
+UID:C-20261102@dividend-calendar.github.io
+DTSTAMP:20261028T010333Z
 DTSTART;VALUE=DATE:20261102
-SUMMARY:Ex-Dividend: Citigroup (C)
-DESCRIPTION:Dividend $0.67 - Payment date: 2026-11-25
-BEGIN:VALARM
-TRIGGER:-P1D
-ACTION:DISPLAY
-DESCRIPTION:Ex-dividend tomorrow: Citigroup
-END:VALARM
+DTEND;VALUE=DATE:20261103
+SUMMARY:C dividend ex-date
+DESCRIPTION:Ex-dividend date for Citigroup (C). Dividend amount reported:
+  0.67 . Payment date: 2026-11-25.
 END:VEVENT
 BEGIN:VEVENT
-UID:MSFT-20261119@dividend-calendar
+UID:MSFT-20261119@dividend-calendar.github.io
+DTSTAMP:20261028T010333Z
 DTSTART;VALUE=DATE:20261119
-SUMMARY:Ex-Dividend: Microsoft (MSFT)
-DESCRIPTION:Dividend $0.98 - Payment date: 2026-12-10
-BEGIN:VALARM
-TRIGGER:-P1D
-ACTION:DISPLAY
-DESCRIPTION:Ex-dividend tomorrow: Microsoft
-END:VALARM
+DTEND;VALUE=DATE:20261120
+SUMMARY:MSFT dividend ex-date
+DESCRIPTION:Ex-dividend date for Microsoft (MSFT). Dividend amount report
+ ed: 0.98 . Payment date: 2026-12-10.
 END:VEVENT
 BEGIN:VEVENT
-UID:NEM-20261125@dividend-calendar
+UID:NEM-20261125@dividend-calendar.github.io
+DTSTAMP:20261028T010333Z
 DTSTART;VALUE=DATE:20261125
-SUMMARY:Ex-Dividend: Newmont (NEM)
-DESCRIPTION:Dividend $0.26 - Payment date: 2026-12-21
-BEGIN:VALARM
-TRIGGER:-P1D
-ACTION:DISPLAY
-DESCRIPTION:Ex-dividend tomorrow: Newmont
-END:VALARM
+DTEND;VALUE=DATE:20261126
+SUMMARY:NEM dividend ex-date
+DESCRIPTION:Ex-dividend date for Newmont (NEM). Dividend amount reported:
+  0.26 . Payment date: 2026-12-21.
 END:VEVENT
 END:VCALENDAR
